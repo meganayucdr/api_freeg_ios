@@ -14,7 +14,8 @@ class GiveawayParticipantController extends Controller
      */
     public function index()
     {
-        //
+      $joinedGiveaway = GiveawayParticipant::where('giveaway_id', $giveaway->id)->get();
+      return Resource::collection($joinedGiveaway);
     }
 
     /**
@@ -35,7 +36,12 @@ class GiveawayParticipantController extends Controller
      */
     public function store(Request $request)
     {
-        //
+          $joinedGiveaway = new GiveawayParticipant();
+          $joinedGiveaway->user_id = $request->user_id;
+          $joinedGiveaway->status = 'Joined';
+          $joinedGiveaway->giveaway()->associate($giveaway);
+          $joinedGiveaway->save();
+          return (new Resource($joinedGiveaway))->response()->setStatusCode(201, 'Success!');
     }
 
     /**
@@ -69,7 +75,16 @@ class GiveawayParticipantController extends Controller
      */
     public function update(Request $request, GiveawayParticipant $giveawayParticipant)
     {
-        //
+        $giveawayParticipant->id = $giveawayParticipant->id;
+        $giveawayParticipant->user_id = $request->user_id;
+        $giveawayParticipant->status = 'Win';
+        $giveaway->status = 'Non Active';
+        //$giveaway = Giveaway::where('id', $request->giveaway_id)->get();
+        //$giveaway->status = 'Non Active';
+        $giveawayParticipant->giveaway()->associate($giveaway);
+        $giveawayParticipant->save();
+        $giveaway->save();
+        return (new Resource($giveawayParticipant));
     }
 
     /**
@@ -78,8 +93,14 @@ class GiveawayParticipantController extends Controller
      * @param  \App\GiveawayParticipant  $giveawayParticipant
      * @return \Illuminate\Http\Response
      */
-    public function destroy(GiveawayParticipant $giveawayParticipant)
+    public function destroy($giveaway, $giveawayParticipant)
     {
-        //
+      DB::table('giveaway_participants')->delete($giveawayParticipant);
+      return response()->json(null, 204);
+    }
+
+    public function getWinner(Request $request) {
+        $winner = GiveawayParticipant::where('giveaway_id', $request->giveaway_id)->where('status', 'Win')->get();
+        return (new Resource($winner));
     }
 }
